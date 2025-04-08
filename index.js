@@ -18,7 +18,7 @@ app.post('/webhook/audio', async (req, res) => {
   try {
     console.log("chegou")
     const { message } = req.body;
-
+    console.log("message", message)
     if (!message || message.type !== 'audio' || !message.url) {
       return res.status(400).send('Não é um áudio válido');
     }
@@ -33,7 +33,7 @@ app.post('/webhook/audio', async (req, res) => {
     const formData = new FormData();
     formData.append('file', fs.createReadStream(audioPath));
     formData.append('model', 'whisper-1');
-
+    console.log("formData", formdata)
     const transcriptRes = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
       headers: {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
