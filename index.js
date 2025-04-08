@@ -46,7 +46,7 @@ app.post('/webhook/audio', async (req, res) => {
     const match = texto.match(/(\w+)\scomprou\s(uma|um)\s([\w\s]+)\spor\s([\w\s]+)\s?/i);
     if (!match) return res.send('Não foi possível extrair os dados');
 
-    const [, nome, , produto, valor] = match;
+    const [nome, produto, valor] = match;
 
     const auth = new google.auth.GoogleAuth({
       credentials: JSON.parse(process.env.GOOGLE_CREDS),
