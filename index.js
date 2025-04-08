@@ -16,6 +16,7 @@ const streamPipeline = promisify(pipeline);
 
 app.post('/webhook/audio', async (req, res) => {
   try {
+    console.log("chegou")
     const { message } = req.body;
 
     if (!message || message.type !== 'audio' || !message.url) {
