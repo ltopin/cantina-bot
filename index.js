@@ -18,13 +18,13 @@ app.post('/webhook/audio', async (req, res) => {
   try {
     console.log("chegou")
     console.log("body", req.body)
-    const { message } = req.body;
+    const { audio } = req.body;
     console.log("message", message)
-    if (!message || message.type !== 'audio' || !message.url) {
+    if (!audio || !audio.audioUrl) {
       return res.status(400).send('Não é um áudio válido');
     }
 
-    const audioUrl = message.url;
+    const audioUrl = req.body.audio.audioUrl;
     const audioPath = `uploads/audio-${Date.now()}.ogg`;
 
     const audioStream = await axios.get(audioUrl, { responseType: 'stream' });
