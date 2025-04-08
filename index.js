@@ -17,9 +17,7 @@ const streamPipeline = promisify(pipeline);
 app.post('/webhook/audio', async (req, res) => {
   try {
     console.log("chegou")
-    console.log("body", req.body)
     const { audio } = req.body;
-    console.log("message", message)
     if (!audio || !audio.audioUrl) {
       return res.status(400).send('Não é um áudio válido');
     }
