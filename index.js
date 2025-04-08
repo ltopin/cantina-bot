@@ -32,7 +32,6 @@ app.post('/webhook/audio', async (req, res) => {
     const formData = new FormData();
     formData.append('file', fs.createReadStream(audioPath));
     formData.append('model', 'whisper-1');
-    console.log("formData", formdata)
     const transcriptRes = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
       headers: {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
