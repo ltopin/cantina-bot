@@ -14,42 +14,49 @@ app.use(express.json());
 app.post('/webhook/audio', upload.single('audio'), async (req, res) => {
   const audioPath = req.file.path;
 
-  // Transcrição com Whisper API
-  const formData = new FormData();
-  formData.append('file', fs.createReadStream(audioPath));
-  formData.append('model', 'whisper-1');
+  try {
+    // Transcrição com Whisper API
+    const formData = new FormData();
+    formData.append('file', fs.createReadStream(audioPath));
+    formData.append('model', 'whisper-1');
 
-  const transcriptRes = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
-    headers: {
-      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-      ...formData.getHeaders()
-    }
-  });
+    const transcriptRes = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        ...formData.getHeaders()
+      }
+    });
 
-  const texto = transcriptRes.data.text;
-  const match = texto.match(/(\w+) comprou (uma|um) ([\w\s]+) por ([\w\s]+)\.?/i);
-  if (!match) return res.send('Não foi possível extrair os dados');
+    const texto = transcriptRes.data.text;
+    const match = texto.match(/(\w+)\scomprou\s(uma|um)\s([\w\s]+)\spor\s([\w\s]+)\s?/i);
+    if (!match) return res.send('Não foi possível extrair os dados');
 
-  const [, nome, , produto, valor] = match;
+    const [, nome, , produto, valor] = match;
 
-  // Autenticação com Google Sheets
-  const auth = new google.auth.GoogleAuth({
-    keyFile: 'credentials.json',
-    scopes: ['https://www.googleapis.com/auth/spreadsheets']
-  });
+    // Autenticação com Google Sheets via variável de ambiente
+    const auth = new google.auth.GoogleAuth({
+      credentials: JSON.parse(process.env.GOOGLE_CREDS),
+      scopes: ['https://www.googleapis.com/auth/spreadsheets']
+    });
 
-  const sheets = google.sheets({ version: 'v4', auth: await auth.getClient() });
+    const sheets = google.sheets({ version: 'v4', auth: await auth.getClient() });
 
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: process.env.SHEET_ID,
-    range: 'A1',
-    valueInputOption: 'RAW',
-    requestBody: {
-      values: [[nome, produto, valor, new Date().toISOString()]]
-    }
-  });
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: process.env.SHEET_ID,
+      range: 'A1',
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [[nome, produto, valor, new Date().toISOString()]]
+      }
+    });
 
-  res.send('Venda registrada com sucesso');
+    res.send('Venda registrada com sucesso');
+  } catch (error) {
+    console.error('Erro:', error);
+    res.status(500).send('Erro ao processar áudio');
+  } finally {
+    fs.unlink(audioPath, () => {}); // remove o arquivo temporário
+  }
 });
 
 app.listen(PORT, () => {
